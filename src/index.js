@@ -169,6 +169,7 @@ async function fetchProblems() {
       allProblems.push(problem);
     });
   });
+  console.log(allProblems);
 }
 
 function getQuestionScope() {
@@ -178,7 +179,7 @@ function getQuestionScope() {
   for (const input of checkedInputs) {
     const grade =
       input.parentNode.parentNode.parentNode.firstElementChild.dataset.subject;
-    const category = input.parentNode.textContent.trimEnd();
+    const category = input.parentNode.dataset.category;
     const subject = categoryToSubject[category];
     scope.add(`${grade}:${subject}:${category}`);
   }
@@ -278,14 +279,14 @@ function updateBarCharts(problem, incorrect) {
   const subjects = document.querySelectorAll("#questionScope > details");
   const summaries = new Array(subjects.length);
   for (let i = 0; i < subjects.length; i++) {
-    summaries[i] = subjects[i].querySelector("summary").textContent.trimEnd();
+    summaries[i] = subjects[i].querySelector("summary").dataset.subject;
   }
   const subjectPos = summaries.findIndex((grade) => grade === problem.grade);
   const subjectId = subjectIds[subjectPos];
   const labelNodes = subjects[subjectPos].querySelectorAll("label");
   const labels = new Array(labelNodes.length);
   for (let i = 0; i < labelNodes.length; i++) {
-    labels[i] = labelNodes[i].textContent.trimEnd();
+    labels[i] = labelNodes[i].dataset.category;
   }
   const labelPos = labels.findIndex((label) => label === problem.category) - 1;
   const chart = charts[subjectId];
