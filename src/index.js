@@ -197,7 +197,6 @@ async function fetchProblems() {
       allProblems.push(problem);
     });
   });
-  console.log(allProblems);
 }
 
 function getQuestionScope() {
@@ -344,61 +343,67 @@ function nextProblem() {
   incorrect = false;
   const problem = problems[getRandomInt(0, problems.length)];
   document.getElementById("problem").textContent = problem.sentence;
-  const choiceNodes = document.getElementById("choices").querySelectorAll(
-    "button",
+  const choiceNodes = Array.from(
+    document.getElementById("choices").querySelectorAll("button"),
   );
-  const choices = Array.from(choiceNodes);
-  shuffle(choices);
-  choices[0].textContent = problem.answer;
-  choices[0].onclick = () => {
-    if (incorrect) {
-      consecutiveWins = 0;
-      addSolvedProblems(problem);
-    }
-    updateChart(problem, incorrect);
-    choices[0].textConent = `⭕ ${choices[0].textContent}`;
-    playAudio("correct");
-    consecutiveWins += 1;
-    for (let i = 0; i < Math.min(consecutiveWins, maxParticleCount); i++) {
-      emojiParticle.worker.postMessage({
-        type: "spawn",
-        options: {
-          particleType: "popcorn",
-          originX: Math.random() * emojiParticle.canvas.width,
-          originY: Math.random() * emojiParticle.canvas.height,
-        },
-      });
-    }
-    nextProblem();
-  };
-  if (problem.subject.endsWith("人物")) {
-    const sameSubjectProblems = problems.filter((p) =>
-      problem.subject === p.subject
-    );
-    for (let i = 1; i < 4; i++) {
-      const index = getRandomInt(0, sameSubjectProblems.length);
-      const choice = sameSubjectProblems[index];
-      const choiceText = choice.answer;
-      choices[i].textContent = choiceText;
-      choices[i].onclick = () => {
-        incorrect = true;
-        choices[i].textContent = `❌ ${choiceText}`;
-        playAudio("incorrect");
-      };
-    }
-  } else {
-    const numbers = Array.from({ length: problem.choices.length }, (_, i) => i);
-    shuffle(numbers);
-    for (let i = 0; i < 3; i++) {
-      const choiceText = problem.choices[numbers[i]];
-      choices[i + 1].textContent = choiceText;
-      choices[i + 1].onclick = () => {
-        incorrect = true;
-        choices[i + 1].textContent = `❌ ${choiceText}`;
-        playAudio("incorrect");
-      };
-    }
+  shuffle(choiceNodes);
+  setChoice(choiceNodes[0], problem.answer, true, problem);
+  const wrongChoices = getWrongChoices(problem);
+  for (let i = 0; i < 3; i++) {
+    setChoice(choiceNodes[i + 1], wrongChoices[i], false, problem);
   }
+}
+
+function getWrongChoices(problem) {
+  if (problem.subject.endsWith("人物")) {
+    const sameSubjects = problems.filter((p) => p.subject === problem.subject);
+    return Array.from({ length: 3 }, () => {
+      const choice = sameSubject[getRandomInt(0, sameSubjects.length)];
+      return choice.answer;
+    });
+  } else {
+    const numbers = shuffle([...problem.choices.keys()]);
+    return numbers.slice(0, 3).map((i) => problem.choices[i]);
+  }
+}
+
+function setChoice(node, text, isCorrect, problem) {
+  node.textContent = text;
+  node.onclick = () => {
+    if (isCorrect) {
+      handleCorrect(node, problem);
+    } else {
+      handleIncorrect(node);
+    }
+  };
+}
+
+function handleCorrect(node, problem) {
+  if (incorrect) {
+    consecutiveWins = 0;
+    addSolvedProblems(problem);
+  }
+  updateChart(problem, incorrect);
+  node.textContent = `⭕ ${node.textContent}`;
+  playAudio("correct");
+  consecutiveWins++;
+  for (let i = 0; i < Math.min(consecutiveWins, maxParticleCount); i++) {
+    emojiParticle.worker.postMessage({
+      type: "spawn",
+      options: {
+        particleType: "popcorn",
+        originX: Math.random() * emojiParticle.canvas.width,
+        originY: Math.random() * emojiParticle.canvas.height,
+      },
+    });
+  }
+  nextProblem();
+}
+
+function handleIncorrect(node) {
+  incorrect = true;
+  node.textContent = `❌ ${node.text}`;
+  playAudio("incorrect");
 }
 
 function setSelectAllEvents() {
