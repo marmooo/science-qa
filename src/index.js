@@ -334,8 +334,13 @@ function updateChart(problem, incorrect) {
 
 function addSolvedProblems(problem) {
   const tbody = document.getElementById("solvedProblems");
-  const html =
-    `<tr><td>${problem.subject}</td><td>${problem.category}</td><td>${problem.answer}</td><td>${problem.sentence}</td></tr>`;
+  const html = `
+    <tr>
+      <td>${problem.subject}</td>
+      <td>${problem.category}</td>
+      <td>${problem.answer}</td>
+      <td>${problem.sentence}</td>
+    </tr>`;
   tbody.insertAdjacentHTML("beforeend", html);
 }
 
@@ -402,7 +407,9 @@ function handleCorrect(node, problem) {
 
 function handleIncorrect(node) {
   incorrect = true;
-  node.textContent = `❌ ${node.text}`;
+  if (!node.textContent.startsWith("❌")) {
+    node.textContent = `❌ ${node.text}`;
+  }
   playAudio("incorrect");
 }
 
